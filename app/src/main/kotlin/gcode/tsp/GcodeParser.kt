@@ -19,8 +19,6 @@ class GcodeParser {
     fun breakUpG0(): GcodeFile {
 
         val allLines = fileToString()
-
-
         val gcodeFile = GcodeFile()
 
         var startingG0 = -1
@@ -41,10 +39,8 @@ class GcodeParser {
 
         gcodeFile.preamble = allLines.subList(0, preambleEndIndex)
 
-
         var currentSentinel = ""
-        gcodeFile.body = allLines.subList(startingG0, lastG1Index)
-            .map {
+        gcodeFile.body = allLines.subList(startingG0, lastG1Index).mapIndexed { index, it ->
                 var ignoreSentinel = false
                 if (it.startsWith("G0")) {
                     currentSentinel = "G0"
@@ -54,9 +50,9 @@ class GcodeParser {
                     ignoreSentinel = true
                 }
 
-                val prefix = if(ignoreSentinel) "" else currentSentinel
+                val prefix = if (ignoreSentinel) "" else currentSentinel
 
-                GcodeLine(currentSentinel, it, "${prefix}${it}")
+                GcodeLine(currentSentinel, it, "${prefix}${it}", index)
             }
         gcodeFile.conclusion = allLines.subList(lastG1Index, allLines.size - 1)
         println("lastG1index = $lastG1Index")
@@ -71,7 +67,7 @@ class G0Group {
 
 }
 
-data class GcodeLine(val command: String, val line: String, val expandedLine: String, val index)
+data class GcodeLine(val command: String, val line: String, val expandedLine: String, val index: Int)
 
 class GcodeFile {
     var preamble: List<String> = arrayListOf()

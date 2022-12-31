@@ -3,7 +3,6 @@
  */
 package gcode.tsp
 
-import java.util.logging.Level
 import java.util.logging.Logger
 import com.google.ortools.Loader
 import com.google.ortools.constraintsolver.*
@@ -21,7 +20,8 @@ class App {
         val manager = RoutingIndexManager(
             dataModel.distanceMatrix.size,
             dataModel.vehicleNumber,
-            dataModel.depot)
+            dataModel.depot
+        )
 
         val routingModel = RoutingModel(manager)
 
@@ -91,24 +91,26 @@ class App {
 fun main() {
 
 //    App().compute()
-    val gcode = measure { GcodeParser().breakUpG0()  }
+    val gcode = measure("") { GcodeParser().breakUpG0() }
 
-    val splitBy: List<Int> = gcode.body.mapIndexedNotNull { index, it ->
-        if(it.expandedLine.startsWith("G0X") || it.expandedLine.startsWith("G0Y")) index else null
+
+    val startIndexes: MutableList<Int> = gcode.body.mapIndexedNotNull { index, it ->
+        if (it.expandedLine.startsWith("G0X") || it.expandedLine.startsWith("G0Y")) index else null
+    }.toMutableList()
+
+    startIndexes.add(gcode.body.size - 1)
+
+    val splitIndexes = startIndexes.mapIndexedNotNull { index, it ->
+        if (index + 1 < startIndexes.size) Pair(it, startIndexes.get(index + 1)) else null
     }
 
-    splitBy.forEachIndexed { index, it ->
-        val startIndex = it;
-        val endIndex = if(index + 1 )
+    val parts = splitIndexes.map { gcode.body.subList(it.first, it.second)}
 
-        gcode.body.subList()
-    }
-
-    gcode.body.forEach {println(it.expandedLine)}
+    parts.forEach { println(it.size) }
 
 }
 
-fun <T> measure(toMeasure: () -> T): T {
+fun <T> measure(description: String, toMeasure: () -> T): T {
     val startMillies = Instant.now().toEpochMilli()
     val result = toMeasure()
     val endMillis = Instant.now().toEpochMilli()
